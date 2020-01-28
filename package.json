@@ -9,13 +9,23 @@
   },
   "scripts": {
     "test": "TESTING=true mocha",
+    "localchain": "./localchain.js",
     "dev": "npm run build:ui && ./run.sh 80 repository db",
     "dev:ui": "cd ./ui/ && npm install && npm start",
     "dev:server": "npm run build:ui && ./run_server.sh",
+    "dev:server:local": "npm run build:ui && TESTING=true ./run_server.sh",
     "build:ui": "cd ./ui/ && npm install && npm run build"
   },
-  "keywords": ["ethereum", "solidity", "verification", "bytecode", "metadata"],
-  "files": ["index.js"],
+  "keywords": [
+    "ethereum",
+    "solidity",
+    "verification",
+    "bytecode",
+    "metadata"
+  ],
+  "files": [
+    "index.js"
+  ],
   "author": "chriseth",
   "license": "MIT",
   "bugs": {
@@ -36,6 +46,7 @@
   },
   "devDependencies": {
     "@0x/sol-compiler": "^4.0.3",
+    "death": "^1.1.0",
     "ganache-cli": "^6.8.2",
     "ipfs-unixfs": "^0.3.0",
     "ipld-dag-pb": "^0.18.2",
