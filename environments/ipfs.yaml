@@ -30,3 +30,5 @@ services:
       target: /app/repository/
     - <<: *env-file-mount
       target: /app/.env
+    ports:
+    - "${IPFS_EXTERNAL_EXPLORER_PORT}:${IPFS_EXPLORER_PORT}"
