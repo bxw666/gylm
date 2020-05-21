@@ -131,6 +131,9 @@ export const VerifyContract: React.FC = () => {
                 </p>
                 <p className="mb-3">Also if you have any question join us on <a
                     href='https://gitter.im/ethereum/source-verify'>Gitter.</a></p>
+                <fieldset className="app-fieldset">
+                    <div className="app-fieldset_body">
+                        <div className="app-fieldset_left"></div>
                         <form className="d-flex flex-column" onSubmit={onSubmit}>
                             <Dropdown 
                                 chainOptions={chainOptions}
@@ -189,10 +192,12 @@ export const VerifyContract: React.FC = () => {
                         </Alert>
                     )
                 }
+                    </div>
+                </fieldset>
                 <p className="my-1">Source code: <a
                     href="https://github.com/ethereum/source-verify/">GitHub</a>
                 </p>
                 <p className="m-0">Feel free to open issues or contribute.</p>
-        </div>
+    </div>
     )
 };
