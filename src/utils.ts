@@ -7,9 +7,25 @@ import fs from 'fs';
 import path from 'path';
 import dirTree from 'directory-tree';
 import * as chainOptions from './chains.json';
+import Injector from './injector';
 
 const solc: any = require('solc');
 
+export let localChainUrl: string = "";
+
+export const log = Logger.createLogger({
+  name: "Server",
+  streams: [{
+    stream: process.stdout,
+    level: 30
+  }]
+});
+
+export const injector = new Injector({
+  localChainUrl: localChainUrl,
+  log: log
+});
+ 
 declare interface StringMap {
   [key: string]: string;
 }
@@ -178,26 +194,26 @@ export type InputData = {
   bytecode?: string
 }
 
-export function findInputFiles(req: Request, log: Logger): any {
+export function findInputFiles(files: any): any {
   const inputs: any = [];
 
-  if (req.files && req.files.files) {
+  if (files && files.files) {
 
     // Case: <UploadedFile[]>
-    if (Array.isArray(req.files.files)) {
-      req.files.files.forEach(file => {
+    if (Array.isArray(files.files)) {
+      files.files.forEach((file: { data: any; }) => {
         inputs.push(file.data)
       })
       return inputs;
 
       // Case: <UploadedFile>
-    } else if (req.files.files["data"]) {
-      inputs.push(req.files.files["data"]);
+    } else if (files.files["data"]) {
+      inputs.push(files.files["data"]);
       return inputs;
     }
 
     // Case: default
-    const msg = `Invalid file(s) detected: ${util.inspect(req.files.files)}`;
+    const msg = `Invalid file(s) detected: ${util.inspect(files.files)}`;
     log.info({loc: '[POST:INVALID_FILE]'}, msg);
     throw new BadRequest(msg);
   }
@@ -209,7 +225,7 @@ export function findInputFiles(req: Request, log: Logger): any {
   throw new NotFound(msg);
 }
 
-export function sanitizeInputFiles(inputs: any, log: Logger): string[] {
+export function sanitizeInputFiles(inputs: any): string[] {
   const files = [];
   if (!inputs.length) {
     const msg = 'Unable to extract any files. Your request may be misformatted ' +
@@ -317,6 +333,28 @@ export function getChainByName(name: string): any {
   throw new NotFound(`Chain ${name} not supported!`)
 }
 
+
+export function verify(inputData: InputData): any{
+
+  // Try to find by address, return on success.
+  try {
+    return findByAddress(inputData.addresses[0], inputData.chain, inputData.repository);
+  } catch(err) {
+    const msg = "Could not find file in repository, proceeding to recompilation"
+    log.info({loc:'[POST:VERIFICATION_BY_ADDRESS_FAILED]'}, msg);
+  }
+
+  // Try to organize files for submission, exit on error.
+  const files = findInputFiles(inputData.files);
+  inputData.files = sanitizeInputFiles(files);
+  
+  // Injection
+  const promises: Promise<Match>[] = [];
+  promises.push(injector.inject(inputData));
+
+  return promises;
+}
+
 //------------------------------------------------------------------------------------------------------
 
 // TODO: implement response middelware that will automatically handle successful and non successful (error) responses
@@ -356,6 +394,11 @@ export function errorMiddleware(
 ) : void {
     const status = error.status || 500;
     const message = error.message || "Something went wrong";
+  
+    log.info({
+      loc: '[SOMETHING_WENT_WRONG]',
+      err: message
+    })
 
     response
       .status(status)
